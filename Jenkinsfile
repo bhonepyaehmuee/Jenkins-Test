@@ -4,7 +4,7 @@ pipeline{
         maven "maven3.9"
     }
     environment {
-            DOCKER_REPO = "bph/spring-html"
+            DOCKER_REPO = "bph/calculator-image"
             APP_JAR = "target\\demo-0.0.1-SNAPSHOT.jar"
             DOCKER_CREDENTIALS_ID = "dockerhub-credentials"
             DOCKER_HOST_PORT = "8081"
