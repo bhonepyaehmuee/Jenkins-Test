@@ -1,99 +1,104 @@
 pipeline {
-    agent any
+  agent any
 
-    tools {
-        maven "maven3.9"
+  tools {
+    maven "maven3.9",
+      jenkins
+  }
+
+  environment {
+    DOCKER_REPO = "bph/calculator-image"
+    DOCKER_HOST_PORT = "8082"
+  }
+
+  stages {
+
+    stage('Checkout') {
+      steps {
+        git branch: 'main',
+          url: 'https://github.com/bhonepyaehmuee/Spring_html.git'
+      }
+    }
+    stage('Build, Test & Coverage') {
+      steps {
+        // This generates JaCoCo HTML at target/site/jacoco
+        sh 'mvn clean verify'
+        junit 'target/surefire-reports/*.xml'
+      }
+    }
+    stage('JaCoCo Report') {
+      steps {
+        publishHTML([
+          allowMissing: false,
+          alwaysLinkToLastBuild: true,
+          keepAll: true,
+          reportDir: 'target/site/jacoco',
+          reportFiles: 'index.html',
+          reportName: 'JaCoCo Coverage'
+        ])
+      }
     }
 
-    environment {
-        DOCKER_REPO = "bph/calculator-image"
-        DOCKER_HOST_PORT = "8082"
+    stage("Static Code Analysis (Checkstyle)") {
+      steps {
+        sh 'mvn checkstyle:checkstyle'
+        publishHTML([
+          reportDir: 'target/site',
+          reportFiles: 'checkstyle.html',
+          reportName: 'Checkstyle Report'
+        ])
+      }
     }
 
-    stages {
-
-        stage('Checkout') {
-            steps {
-                git branch: 'main',
-                    url: 'https://github.com/bhonepyaehmuee/Spring_html.git'
-            }
-        }
-
-        stage('Build') {
-            steps {
-                sh 'mvn clean compile'
-            }
-        }
-
-
-
-        stage('JaCoCo Report') {
-            steps {
-                publishHTML([
-                    allowMissing: false,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true,
-                    reportDir: 'target/site/jacoco',
-                    reportFiles: 'index.html',
-                    reportName: 'JaCoCo Coverage'
-                ])
-            }
-        }
-
-        stage('Static Code Analysis (Checkstyle)') {
-            steps {
-                sh 'mvn checkstyle:checkstyle'
-                publishHTML([
-                    allowMissing: false,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true,
-                    reportDir: 'target/site/checkstyle',
-                    reportFiles: 'checkstyle.html',
-                    reportName: 'Checkstyle Report'
-                ])
-            }
-        }
-
-        stage('Build WAR') {
-            steps {
-                sh 'mvn package -DskipTests'
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    def imageTag = env.BUILD_NUMBER
-                    sh "docker build -t ${DOCKER_REPO}:${imageTag} ."
-                    sh "docker tag ${DOCKER_REPO}:${imageTag} ${DOCKER_REPO}:latest"
-                    env.IMAGE_TAG = imageTag
-                }
-            }
-        }
-
-        stage('Run Docker Container') {
-            steps {
-                echo "Running container locally (port ${DOCKER_HOST_PORT})..."
-                sh """
-                  docker stop calculator-container || true
-                  docker rm calculator-container || true
-                  docker run -d --name calculator-container \
-                    -p ${DOCKER_HOST_PORT}:8080 \
-                    ${DOCKER_REPO}:${env.IMAGE_TAG}
-                """
-            }
-        }
+    stage('Build Jar') {
+      steps {
+        // Jar build AFTER coverage
+        sh 'mvn clean package -DskipTests'
+      }
     }
 
-    post {
-        success {
-            echo "✅ Pipeline succeeded! App running at http://localhost:${DOCKER_HOST_PORT}/"
+    stage('Build Docker Image') {
+      steps {
+        script {
+          def imageTag = "${env.BUILD_NUMBER}"
+          sh "docker build -t ${DOCKER_REPO}:${imageTag} ."
+          sh "docker tag ${DOCKER_REPO}:${imageTag} ${DOCKER_REPO}:latest"
+          env.IMAGE_TAG = imageTag
         }
-        failure {
-            echo "❌ Pipeline failed."
-        }
-        always {
-            echo "🏁 Pipeline finished."
-        }
+      }
     }
+
+    stage('Run Docker Container') {
+      steps {
+        echo "Running container locally (port ${DOCKER_HOST_PORT})..."
+        sh ""
+        "
+        docker stop calculator - container || true
+        docker rm calculator - container || true
+        docker run - d--name calculator - container\ -
+          p $ {
+            DOCKER_HOST_PORT
+          }: 8080\
+        $ {
+          DOCKER_REPO
+        }: $ {
+          env.IMAGE_TAG
+        }
+        ""
+        "
+      }
+    }
+  }
+
+  post {
+    success {
+      echo "✅ Pipeline succeeded! App running at http://localhost:${DOCKER_HOST_PORT}/"
+    }
+    failure {
+      echo "❌ Pipeline failed."
+    }
+    always {
+      echo "🏁 Pipeline finished."
+    }
+  }
 }
