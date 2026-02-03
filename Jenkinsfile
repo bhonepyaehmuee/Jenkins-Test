@@ -15,7 +15,7 @@ pipeline {
         stage('Checkout') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/bhonepyaehmuee/Spring_html.git'
+                    url: 'https://github.com/bhonepyaehmuee/Jenkins-Test.git'
             }
         }
 
