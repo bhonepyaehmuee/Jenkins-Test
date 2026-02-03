@@ -7,7 +7,7 @@ pipeline{
             DOCKER_REPO = "bph/calculator-image"
             APP_JAR = "target\\demo-0.0.1-SNAPSHOT.jar"
             DOCKER_CREDENTIALS_ID = "dockerhub-credentials"
-            DOCKER_HOST_PORT = "8081"
+            DOCKER_HOST_PORT = "8082"
     }
     stages{
         stage('Checkout'){
@@ -25,29 +25,30 @@ pipeline{
                 sh 'mvn test'
             }
        }
-       stage('JaCoCo Report') {
+        stage('JaCoCo Report') {
             steps {
                 // Publish JaCoCo HTML report in Jenkins
-                    publishHTML([
-                        allowMissing: false,
-                        alwaysLinkToLastBuild: true,
-                        keepAll: true,
-                        reportDir: 'target/site/jacoco',
-                        reportFiles: 'index.html',
-                        reportName: 'JaCoCo Coverage'
-                       ])
-                   }
-               }
-       stage("Static Code Analysis (Checkstyle)") {
+                publishHTML([
+                    allowMissing: false,
+                    alwaysLinkToLastBuild: true,
+                    keepAll: true,
+                    reportDir: 'target/site/jacoco',
+                    reportFiles: 'index.html',
+                    reportName: 'JaCoCo Coverage'
+                ])
+            }
+        }
+        stage("Static Code Analysis (Checkstyle)") {
             steps {
                 sh "mvn checkstyle:checkstyle"
-                    publishHTML(target: [
-                           reportDir: 'target/site',
-                           reportFiles: 'checkstyle.html',
-                           reportName: 'Checkstyle Report'
-                    ])
-                }
+                publishHTML(target: [
+                    reportDir: 'target/site',
+                    reportFiles: 'checkstyle.html',
+                    reportName: 'Checkstyle Report'
+                ])
             }
+        }
+      
        stage('Build Jar'){
            steps{
                 sh 'mvn clean package -DskipTests'
@@ -70,7 +71,7 @@ pipeline{
                 sh """
                 docker stop calculator-container || true
                 docker rm calculator-container || true
-                docker run -d --name calculator-container -p 8081:8080 ${DOCKER_REPO}:${env.IMAGE_TAG}
+                docker run -d --name calculator-container -p 8082:8080 ${DOCKER_REPO}:${env.IMAGE_TAG}
                 """
             }
         }
