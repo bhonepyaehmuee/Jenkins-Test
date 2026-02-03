@@ -30,12 +30,12 @@ pipeline {
         stage('JaCoCo Report') {
             steps {
                 publishHTML([
-                    allowMissing: false,
-                    alwaysLinkToLastBuild: true,
-                    keepAll: true,
                     reportDir: 'target/site/jacoco',
                     reportFiles: 'index.html',
-                    reportName: 'JaCoCo Coverage'
+                    reportName: 'JaCoCo Coverage',
+                    allowMissing: false,   // Required parameter
+                    alwaysLinkToLastBuild: true,   // Required parameter
+                    keepAll: true   // Required parameter
                 ])
             }
         }
@@ -46,10 +46,14 @@ pipeline {
                 publishHTML([
                     reportDir: 'target/site',
                     reportFiles: 'checkstyle.html',
-                    reportName: 'Checkstyle Report'
+                    reportName: 'Checkstyle Report',
+                    allowMissing: false,   // Required parameter
+                    alwaysLinkToLastBuild: true,   // Required parameter
+                    keepAll: true   // Required parameter
                 ])
             }
         }
+
 
         stage('Build Jar') {
             steps {
