@@ -88,9 +88,19 @@ pipeline {
     post {
         success {
             echo "✅ Pipeline succeeded! App running at http://localhost:${DOCKER_HOST_PORT}/"
+            emailext(
+                to: 'bhshi75@gmail.com',
+                subject: 'Pipeline Email Test',
+                body: 'Pipeline Success email sent successfully ✅'
+            )
         }
         failure {
             echo "❌ Pipeline failed."
+            emailext(
+                to: 'bhshi75@gmail.com',
+                subject: 'Pipeline Email Test',
+                body: 'Pipeline Fail email sent successfully ✅'
+            )
         }
         always {
             echo "🏁 Pipeline finished."
