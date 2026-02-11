@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         DOCKER_REPO = "bph/calculator-image"
-        DOCKER_HOST_PORT = "8082"
+        DOCKER_HOST_PORT = "9095"
     }
 
     stages {
