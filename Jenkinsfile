@@ -7,7 +7,7 @@ pipeline {
 
     environment {
         DOCKER_REPO = "bph/calculator-image"
-        DOCKER_HOST_PORT = "9095"
+        DOCKER_HOST_PORT = "9096"
     }
 
     stages {
@@ -79,7 +79,7 @@ pipeline {
                 sh """
                 docker stop calculator-container || true
                 docker rm calculator-container || true
-                docker run -d --name calculator-container -p 8082:8080 ${DOCKER_REPO}:${env.IMAGE_TAG}
+                docker run -d --name calculator-container -p 9096:8080 ${DOCKER_REPO}:${env.IMAGE_TAG}
                 """
             }
         }
