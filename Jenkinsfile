@@ -77,8 +77,8 @@ pipeline {
             steps {
                 echo "Running container locally (port 8081)..."
                 sh """
-                docker stop calculator-container || true
-                docker rm calculator-container || true
+                docker stop bph-calculator-container || true
+                docker rm bph-calculator-container || true
                 docker run -d --name bph-calculator-container -p 9096:8080 ${DOCKER_REPO}:${env.IMAGE_TAG}
                 """
             }
