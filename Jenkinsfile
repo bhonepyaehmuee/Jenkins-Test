@@ -6,7 +6,7 @@ pipeline {
     }
 
     environment {
-        DOCKER_REPO = "bph/bph-calculator-image"
+        DOCKER_REPO = "bph-calculator-image"
         DOCKER_HOST_PORT = "9096"
     }
 
