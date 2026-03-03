@@ -103,6 +103,27 @@ pipeline {
                 """
             }
         }
+
+        stage('Acceptance Test') {
+            steps {
+                sh 'bash acceptance_test.sh'
+            }
+            post {
+                always {
+                    // Make sure this folder matches your Maven configuration
+                    junit allowEmptyResults: true, testResults: 'target/acceptance-reports/*.xml'
+        
+                    publishHTML(target: [
+                        allowMissing: true,
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true,
+                        reportDir: 'target',
+                        reportFiles: 'cucumber-report.html',
+                        reportName: 'Acceptance Report'
+                    ])
+                }
+            }
+        }
     }
 
     post {
