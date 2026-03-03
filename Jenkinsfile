@@ -119,7 +119,7 @@ stage('Acceptance Test') {
                 allowMissing: false, // Set to false so you get an error if it's actually missing
                 keepAll: true,
                 alwaysLinkToLastBuild: true,
-                reportDir: 'target/cucumber-reports', // Standard Maven plugin output dir
+                reportDir: 'target', // Standard Maven plugin output dir
                 reportFiles: 'cucumber-html-reports/overview-features.html', // The main entry point
                 reportName: 'Acceptance Report'
             ])
