@@ -103,27 +103,29 @@ pipeline {
                 """
             }
         }
-
-        stage('Acceptance Test') {
-            steps {
-                sh 'bash acceptance_test.sh'
-            }
-            post {
-                always {
-                    // Make sure this folder matches your Maven configuration
-                    junit allowEmptyResults: true, testResults: 'target/acceptance-reports/*.xml'
+stage('Acceptance Test') {
+    steps {
+        // Ensure the script actually runs the maven command to generate the report
+        sh 'bash acceptance_test.sh'
+    }
+    post {
+        always {
+            // 1. Use double asterisks to find XML results anywhere under target
+            junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
         
-                    publishHTML(target: [
-                        allowMissing: true,
-                        keepAll: true,
-                        alwaysLinkToLastBuild: true,
-                        reportDir: 'target',
-                        reportFiles: 'cucumber-report.html',
-                        reportName: 'Acceptance Report'
-                    ])
-                }
-            }
+            // 2. Fix the HTML Publisher path
+            // Maven Cucumber Reporting usually generates a folder called 'cucumber-html-reports'
+            publishHTML(target: [
+                allowMissing: false, // Set to false so you get an error if it's actually missing
+                keepAll: true,
+                alwaysLinkToLastBuild: true,
+                reportDir: 'target/cucumber-reports', // Standard Maven plugin output dir
+                reportFiles: 'cucumber-html-reports/overview-features.html', // The main entry point
+                reportName: 'Acceptance Report'
+            ])
         }
+    }
+}
     }
 
     post {
