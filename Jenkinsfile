@@ -54,6 +54,26 @@ pipeline {
             }
         }
 
+        stage('Code Analysis') {
+            environment {
+                scannerHome = tool 'sonar'
+            }
+            steps {
+                withSonarQubeEnv('sonar') {
+                     
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=calculator-demo \
+                            -Dsonar.projectName=calculator-demo \
+                            -Dsonar.sources=. \
+                            -Dsonar.java.binaries=target/classes \
+                          
+                        """
+                    
+                }
+            }
+        }
+
 
         stage('Build Jar') {
             steps {
