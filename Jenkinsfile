@@ -60,20 +60,16 @@ pipeline {
             }
             steps {
                 withSonarQubeEnv('sonar') {
-                     
-                        sh """
-                            ${scannerHome}/bin/sonar-scanner \
-                            -Dsonar.projectKey=calculator-demo \
-                            -Dsonar.projectName=calculator-demo \
-                            -Dsonar.sources=. \
-                            -Dsonar.java.binaries=target/classes \
-                          
-                        """
-                    
+                    sh """
+                        ${scannerHome}/bin/sonar-scanner \
+                        -Dsonar.projectKey=calculator-demo \
+                        -Dsonar.projectName=calculator-demo \
+                        -Dsonar.sources=. \
+                        -Dsonar.java.binaries=target/classes
+                    """
                 }
             }
         }
-
 
         stage('Build Jar') {
             steps {
@@ -95,7 +91,7 @@ pipeline {
 
         stage('Run Docker Container') {
             steps {
-                echo "Running container locally (port 8081)..."
+                echo "Running container locally (port 9096)..."
                 sh """
                 docker stop bph-calculator-container || true
                 docker rm bph-calculator-container || true
@@ -103,29 +99,29 @@ pipeline {
                 """
             }
         }
-stage('Acceptance Test') {
-    steps {
-        // Ensure the script actually runs the maven command to generate the report
-        sh 'bash acceptance_test.sh'
-    }
-    post {
-        always {
-            // 1. Use double asterisks to find XML results anywhere under target
-            junit allowEmptyResults: true, testResults: '**/target/surefire-reports/*.xml'
-        
-            // 2. Fix the HTML Publisher path
-            // Maven Cucumber Reporting usually generates a folder called 'cucumber-html-reports'
-            publishHTML(target: [
-                allowMissing: false, // Set to false so you get an error if it's actually missing
-                keepAll: true,
-                alwaysLinkToLastBuild: true,
-                reportDir: 'target', // Standard Maven plugin output dir
-                reportFiles: 'cucumber-html-reports/overview-features.html', // The main entry point
-                reportName: 'Acceptance Report'
-            ])
+
+        stage('Acceptance Test') {
+            steps {
+                // Run your acceptance test script
+                sh 'mvn verify -Pacceptance'
+            }
+            post {
+                always {
+                    // JUnit XML reports (for test results)
+                    junit allowEmptyResults: true, testResults: 'target/cucumber-reports/*.xml'
+    
+                    // HTML report from Cucumber
+                    publishHTML(target: [
+                        allowMissing: true,
+                        keepAll: true,
+                        alwaysLinkToLastBuild: true,
+                        reportDir: 'target/cucumber-reports',      // folder where HTML is generated
+                        reportFiles: 'cucumber-report.html',       // actual HTML file
+                        reportName: 'Acceptance Report'
+                    ])
+                }
+            }
         }
-    }
-}
     }
 
     post {
@@ -133,16 +129,16 @@ stage('Acceptance Test') {
             echo "✅ Pipeline succeeded! App running at http://localhost:${DOCKER_HOST_PORT}/"
             emailext(
                 to: 'bhshi75@gmail.com',
-                subject: 'Pipeline Email Test',
-                body: 'Pipeline Success email sent successfully ✅'
+                subject: 'Jenkins Pipeline Success',
+                body: 'Your Jenkins pipeline has successfully completed ✅. The application is running at http://localhost:${DOCKER_HOST_PORT}/'
             )
         }
         failure {
             echo "❌ Pipeline failed."
             emailext(
                 to: 'bhshi75@gmail.com',
-                subject: 'Pipeline Email Test',
-                body: 'Pipeline Fail email sent successfully ✅'
+                subject: 'Jenkins Pipeline Failure',
+                body: 'The Jenkins pipeline failed. Please check the logs for more details ❌.'
             )
         }
         always {
