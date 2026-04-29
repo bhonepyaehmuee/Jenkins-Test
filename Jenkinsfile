@@ -47,13 +47,17 @@ pipeline {
 
         // Stage 5: Deploy to Kubernetes
         stage('Deploy to Kubernetes') {
-            steps {
-                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
-                    sh 'kubectl apply -f deployment.yaml --validate=false'
-                    sh 'kubectl apply -f service.yaml'
+                    steps {
+                        sh 'kubectl apply -f hazelcast.yaml --validate=false'
+                        sh 'kubectl rollout status deployment/hazelcast'
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]){
+                  sh 'kubectl apply -f hazelcast.yaml'
+                          sh 'kubectl apply -f deployment.yaml'
+                          sh 'kubectl apply -f service.yaml'
+                        }
+                    }
                 }
-            }
-        }
+
     }
 
     post {
