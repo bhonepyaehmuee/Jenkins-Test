@@ -6,12 +6,12 @@ pipeline {
     }
 
     environment {
-        DOCKER_REPO = "bph-calculator-image"
+        DOCKER_REPO = "bownoed/calculator"
         DOCKER_HOST_PORT = "9096"
     }
 
     stages {
-
+        // Stage 1: Checkout code from Git
         stage('Checkout') {
             steps {
                 git branch: 'main',
@@ -19,68 +19,39 @@ pipeline {
             }
         }
 
-        stage('Build, Test & Coverage') {
-            steps {
-                // This generates JaCoCo HTML at target/site/jacoco
-                sh 'mvn clean verify'
-                junit 'target/surefire-reports/*.xml'
-            }
-        }
-
-        stage('JaCoCo Report') {
-            steps {
-                publishHTML([
-                    reportDir: 'target/site/jacoco',
-                    reportFiles: 'index.html',
-                    reportName: 'JaCoCo Coverage',
-                    allowMissing: false,   // Required parameter
-                    alwaysLinkToLastBuild: true,   // Required parameter
-                    keepAll: true   // Required parameter
-                ])
-            }
-        }
-
-        stage("Static Code Analysis (Checkstyle)") {
-            steps {
-                sh 'mvn checkstyle:checkstyle'
-                publishHTML([
-                    reportDir: 'target/site',
-                    reportFiles: 'checkstyle.html',
-                    reportName: 'Checkstyle Report',
-                    allowMissing: false,   // Required parameter
-                    alwaysLinkToLastBuild: true,   // Required parameter
-                    keepAll: true   // Required parameter
-                ])
-            }
-        }
-
-
+        // Stage 2: Build the JAR file
         stage('Build Jar') {
             steps {
-                // Jar build AFTER coverage
                 sh 'mvn clean package -DskipTests'
             }
         }
 
+        // Stage 3: Build the Docker Image
         stage('Build Docker Image') {
             steps {
                 script {
-                    def imageTag = "${env.BUILD_NUMBER}"
-                    sh "docker build -t ${DOCKER_REPO}:${imageTag} ."
-                    sh "docker tag ${DOCKER_REPO}:${imageTag} ${DOCKER_REPO}:latest"
-                    env.IMAGE_TAG = imageTag
+                    sh 'docker build -t bownoed/calculator:v1.0 .'
                 }
             }
         }
 
-        stage('Run Docker Container') {
+        // Stage 4: Push Docker Image to Docker Hub
+        stage('Push to Docker Hub') {
             steps {
-                echo "Running container locally (port 8081)..."
-                sh """
-                docker stop bph-calculator-container || true
-                docker rm bph-calculator-container || true
-                docker run -d --name bph-calculator-container -p 9096:8080 ${DOCKER_REPO}:${env.IMAGE_TAG}
-                """
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                    sh "docker login -u ${DOCKER_USER} -p ${DOCKER_PASS}"
+                }
+                sh 'docker push bownoed/calculator:v1.0'
+            }
+        }
+
+        // Stage 5: Deploy to Kubernetes
+        stage('Deploy to Kubernetes') {
+            steps {
+                withCredentials([file(credentialsId: 'kubeconfig', variable: 'KUBECONFIG')]) {
+                    sh 'kubectl apply -f deployment.yaml --validate=false'
+                    sh 'kubectl apply -f service.yaml'
+                }
             }
         }
     }
@@ -90,16 +61,16 @@ pipeline {
             echo "✅ Pipeline succeeded! App running at http://localhost:${DOCKER_HOST_PORT}/"
             emailext(
                 to: 'bhshi75@gmail.com',
-                subject: 'Pipeline Email Test',
-                body: 'Pipeline Success email sent successfully ✅'
+                subject: "Pipeline Success",
+                body: "Pipeline succeeded. Your app is running at http://localhost:${DOCKER_HOST_PORT}/"
             )
         }
         failure {
             echo "❌ Pipeline failed."
             emailext(
                 to: 'bhshi75@gmail.com',
-                subject: 'Pipeline Email Test',
-                body: 'Pipeline Fail email sent successfully ✅'
+                subject: "Pipeline Failure",
+                body: "Pipeline failed. Please check the logs."
             )
         }
         always {

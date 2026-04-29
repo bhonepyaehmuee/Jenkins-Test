@@ -1,3 +1,6 @@
-com\example\calculator\servicetest\CalculatorServiceTest.class
+com\example\calculator\acceptance\CucumberConfiguration.class
 com\example\calculator\servicetest\CalculatorTest.class
+com\example\calculator\acceptance\AcceptanceTest.class
+com\example\calculator\acceptance\StepDefinitions.class
+com\example\calculator\servicetest\CalculatorServiceTest.class
 com\example\calculator\CalculatorApplicationTests.class
